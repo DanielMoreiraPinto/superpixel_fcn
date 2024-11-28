@@ -4,8 +4,8 @@ import torch.backends.cudnn as cudnn
 import models
 import torchvision.transforms as transforms
 import flow_transforms
-from scipy.ndimage import imread
-from scipy.misc import imsave
+from cv2 import imread
+from cv2 import imwrite
 from loss import *
 import time
 import random
@@ -42,7 +42,7 @@ parser = argparse.ArgumentParser(description='PyTorch SPixelNet inference on a f
                                  formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
 parser.add_argument('--data_dir', metavar='DIR', default='./demo/inputs', help='path to images folder')
-parser.add_argument('--data_suffix',  default='jpg', help='suffix of the testing image')
+parser.add_argument('--data_suffix',  default='png', help='suffix of the testing image')
 parser.add_argument('--pretrained', metavar='PTH', help='path to pre-trained model',
                                     default= './pretrain_ckpt/SpixelNet_bsd_ckpt.tar')
 parser.add_argument('--output', metavar='DIR', default= './demo' , help='path to output folder')
@@ -69,7 +69,7 @@ def test(args, model, img_paths, save_path, idx):
     imgId = os.path.basename(img_file)[:-4]
 
     # may get 4 channel (alpha channel) for some format
-    img_ = imread(load_path)[:, :, :3]
+    img_ = imread(load_path, cv2.IMREAD_COLOR)[:, :, :3]
     H, W, _ = img_.shape
     H_, W_  = int(np.ceil(H/16.)*16), int(np.ceil(W/16.)*16)
 
@@ -117,7 +117,8 @@ def test(args, model, img_paths, save_path, idx):
     if not os.path.isdir(os.path.join(save_path, 'spixel_viz')):
         os.makedirs(os.path.join(save_path, 'spixel_viz'))
     spixl_save_name = os.path.join(save_path, 'spixel_viz', imgId + '_sPixel.png')
-    imsave(spixl_save_name, spixel_viz.transpose(1, 2, 0))
+    spixel_viz = (spixel_viz * 255).astype(np.uint8)
+    imwrite(spixl_save_name, spixel_viz.transpose(1, 2, 0))
 
     # save the unique maps as csv, uncomment it if needed
     # if not os.path.isdir(os.path.join(save_path, 'map_csv')):
