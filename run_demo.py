@@ -112,13 +112,31 @@ def test(args, model, img_paths, save_path, idx):
     # img_save = (ori_img + mean_values).clamp(0, 1)
     # imsave(spixl_save_name, img_save.detach().cpu().numpy().transpose(1, 2, 0))
 
+    # Get superpixel contours
+    spix_index_np = spixel_label_map.astype(np.uint8)
+
+    # Find contours
+    contours, hierarchy = cv2.findContours(spix_index_np, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+
+    # Draw contours on an image (optional, for visualization)
+    contour_img = np.zeros_like(spix_index_np, dtype=np.uint8)
+    for i, contour in enumerate(contours):
+        color = (i * 10 % 256, i * 15 % 256, i * 20 % 256)  # Generate pseudo-random color
+        cv2.drawContours(contour_img, [contour], -1, color, thickness=1)
 
     # save spixel viz
     if not os.path.isdir(os.path.join(save_path, 'spixel_viz')):
         os.makedirs(os.path.join(save_path, 'spixel_viz'))
     spixl_save_name = os.path.join(save_path, 'spixel_viz', imgId + '_sPixel.png')
+    
     spixel_viz = (spixel_viz * 255).astype(np.uint8)
     imwrite(spixl_save_name, spixel_viz.transpose(1, 2, 0))
+    
+    map_save_name = os.path.join(save_path, 'spixel_viz', imgId + '_map.png')
+    imwrite(map_save_name, spixel_label_map)
+    
+    contours_save_name = os.path.join(save_path, 'spixel_viz', imgId + '_contours.png')
+    imwrite(contours_save_name, contour_img)
 
     # save the unique maps as csv, uncomment it if needed
     # if not os.path.isdir(os.path.join(save_path, 'map_csv')):
